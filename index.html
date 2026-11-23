@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="ms" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SRI BUDINAR SOLUTION SDN BHD - Sistem Pengurusan Pembinaan</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Inter & Font Awesome Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        industrial: {
+                            dark: '#0f172a',
+                            slate: '#1e293b',
+                            accent: '#f97316',
+                            gold: '#eab308'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Gaya CSS Vanila Tambahan & Tema Pembinaan */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+        }
+        .construction-hero-bg {
+            background-image: linear-gradient(to right, rgba(15, 23, 42, 0.92), rgba(30, 41, 59, 0.80)), 
+                              url('https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .login-bg {
+            background-image: linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.85)), 
+                              url('https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .nav-btn-active {
+            background-color: #f97316 !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.35);
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+        }
+        /* Cetakan Rasmi Invois */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #invoice-print-area, #invoice-print-area * {
+                visibility: visible;
+            }
+            #invoice-print-area {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                padding: 20px;
+                background: white;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col text-slate-800 antialiased">
+
+<!-- ========================================== -->
+    <!-- SKRIN LOG MASUK (LOGIN & PASSWORD)         -->
+    <!-- ========================================== -->
+    <div id="login-screen" class="login-bg min-h-screen flex items-center justify-center p-4">
+        <div class="w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl border border-slate-200">
+            <!-- Logo & Nama Syarikat -->
+            <div class="text-center mb-8">
+                <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-industrial-accent text-white shadow-lg shadow-orange-500/30">
+                    <i class="fa-solid fa-helmet-safety text-3xl"></i>
+                </div>
+                <h1 class="text-xl font-extrabold tracking-tight text-slate-900">SRI BUDINAR SOLUTION SDN BHD</h1>
+                <p class="text-xs font-medium text-slate-500 mt-1">Sistem Pengurusan Bersepadu Projek & Pembinaan Bangunan</p>
+            </div>
+
+<!-- Paparan Ralat Log Masuk -->
+            <div id="login-error" class="hidden mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-xs font-medium text-red-600 flex items-center gap-2">
+                <i class="fa-solid fa-circle-exclamation text-sm"></i>
+                <span id="login-error-msg">Nama pengguna atau kata laluan salah.</span>
+            </div>
+
+<!-- Borang Log Masuk -->
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Peranan Akses</label>
+                    <select id="login-role" onchange="autofillDemoCredentials()" class="w-full rounded-xl border border-slate-300 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 focus:border-industrial-accent focus:bg-white focus:outline-none">
+                        <option value="admin">Admin Sistem (Akses Penuh - Edit & Key-In)</option>
+                        <option value="pengguna">Pengguna / Staf Tapak (Mod Pemantauan Sahaja)</option>
+                    </select>
+                </div>
+
+<div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">ID Pengguna (Username)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" id="login-username" required placeholder="Masukkan ID pengguna" class="w-full rounded-xl border border-slate-300 pl-10 pr-4 py-3 text-sm focus:border-industrial-accent focus:outline-none">
+                    </div>
+                </div>
+
+<div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Kata Laluan (Password)</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="login-password" required placeholder="Masukkan kata laluan" class="w-full rounded-xl border border-slate-300 pl-10 pr-4 py-3 text-sm focus:border-industrial-accent focus:outline-none">
+                    </div>
+                </div>
+
+<button type="submit" class="w-full rounded-xl bg-industrial-accent py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition flex items-center justify-center gap-2 mt-2">
+                    <i class="fa-solid fa-right-to-bracket"></i> Log Masuk ke Sistem
+                </button>
+            </form>
+
+<!-- Panduan Akaun Demo -->
+            <div class="mt-6 rounded-2xl bg-slate-50 p-4 border border-slate-200 text-xs text-slate-600 space-y-1.5">
+                <p class="font-bold text-slate-800 flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-info text-industrial-accent"></i> Akaun Akses Sistem:
+                </p>
+                <div class="flex justify-between">
+                    <span><strong>Admin:</strong> <code class="bg-slate-200 px-1.5 py-0.5 rounded">admin</code></span>
+                    <span>Pass: <code class="bg-slate-200 px-1.5 py-0.5 rounded">admin123</code></span>
+                </div>
+                <div class="flex justify-between">
+                    <span><strong>Pengguna:</strong> <code class="bg-slate-200 px-1.5 py-0.5 rounded">pengguna</code></span>
+                    <span>Pass: <code class="bg-slate-200 px-1.5 py-0.5 rounded">user123</code></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- ========================================== -->
+    <!-- PAPARAN UTAMA SISTEM PENGURUSAN SYARIKAT   -->
+    <!-- ========================================== -->
+    <div id="main-app" class="hidden flex-1 flex flex-col">
+
+<!-- BAR NAVIGASI ATAS (HEADER) -->
+        <header class="bg-industrial-dark text-white shadow-lg sticky top-0 z-30 border-b border-slate-800">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-industrial-accent text-white shadow-md">
+                        <i class="fa-solid fa-building-shield text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-base sm:text-lg font-extrabold tracking-tight block leading-tight">SRI BUDINAR SOLUTION SDN BHD</span>
+                        <span class="text-[11px] text-slate-400 font-medium">Sistem Pengurusan Pembinaan & Kontraktor Bersepadu</span>
+                    </div>
+                </div>
+
+<div class="flex items-center gap-3">
+                    <!-- Penunjuk Status Peranan Pengguna -->
+                    <div class="flex items-center gap-2 bg-slate-800/90 px-3.5 py-2 rounded-full border border-slate-700">
+                        <span id="role-status-dot" class="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span id="user-display-info" class="text-xs font-semibold text-slate-200">Mod Admin (Akses Penuh)</span>
+                    </div>
+
+<button onclick="handleLogout()" class="flex items-center gap-2 rounded-xl bg-red-500/10 px-3.5 py-2 text-xs font-bold text-red-400 hover:bg-red-500 hover:text-white transition border border-red-500/30">
+                        <i class="fa-solid fa-power-off"></i> <span class="hidden sm:inline">Log Keluar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+<!-- HERO BANNER TEMA PEMBINAAN BANGUNAN -->
+        <section class="construction-hero-bg text-white py-8 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+            <div class="max-w-7xl mx-auto">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 rounded-full bg-orange-500/20 border border-orange-400/30 px-3 py-1 text-xs font-semibold text-orange-300 mb-3">
+                            <i class="fa-solid fa-hard-hat"></i> Portal Operasi & Pemantauan Tapak Bina
+                        </div>
+                        <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Kawalan Operasi Pembinaan Bangunan</h2>
+                        <p class="text-sm text-slate-300 mt-1 max-w-2xl">
+                            Pantau inventori bahan binaan, harga pembekal semasa, logistik pengangkutan berat, kemajuan projek aktif, serta pengurusan sebutharga dan invois syarikat dalam satu papan pemuka.
+                        </p>
+                    </div>
+
+<!-- Kad Statistik Ringkas -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+                        <div class="rounded-2xl bg-slate-800/80 border border-slate-700 p-3.5 backdrop-blur-sm">
+                            <p class="text-[11px] font-medium text-slate-400 uppercase">Projek Aktif</p>
+                            <p id="stat-projek" class="text-xl font-extrabold text-white mt-0.5">4</p>
+                            <span class="text-[10px] text-emerald-400"><i class="fa-solid fa-arrow-trend-up"></i> Mengikut Jadual</span>
+                        </div>
+                        <div class="rounded-2xl bg-slate-800/80 border border-slate-700 p-3.5 backdrop-blur-sm">
+                            <p class="text-[11px] font-medium text-slate-400 uppercase">Item Stok</p>
+                            <p id="stat-stok" class="text-xl font-extrabold text-white mt-0.5">4</p>
+                            <span class="text-[10px] text-amber-400"><i class="fa-solid fa-warehouse"></i> Gudang Utama</span>
+                        </div>
+                        <div class="rounded-2xl bg-slate-800/80 border border-slate-700 p-3.5 backdrop-blur-sm">
+                            <p class="text-[11px] font-medium text-slate-400 uppercase">Armada Lori</p>
+                            <p id="stat-lori" class="text-xl font-extrabold text-white mt-0.5">3</p>
+                            <span class="text-[10px] text-sky-400"><i class="fa-solid fa-truck-moving"></i> Aktif Harian</span>
+                        </div>
+                        <div class="rounded-2xl bg-slate-800/80 border border-slate-700 p-3.5 backdrop-blur-sm">
+                            <p class="text-[11px] font-medium text-slate-400 uppercase">Rekod Kewangan</p>
+                            <p id="stat-invoice" class="text-xl font-extrabold text-orange-400 mt-0.5">4</p>
+                            <span class="text-[10px] text-slate-300"><i class="fa-solid fa-file-invoice-dollar"></i> Invois & QTN</span>
+                        </div>
+                    </div>
+                </div>
+
+<!-- BAR BUTANG NAVIGASI MODUL UTAMA -->
+                <nav class="mt-8 flex flex-wrap gap-2.5" aria-label="Navigasi Modul Sistem">
+                    <button onclick="switchTab('stok')" id="btn-tab-stok" class="nav-tab-btn nav-btn-active flex items-center gap-2 rounded-xl bg-slate-800/90 px-4 py-3 text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700 transition border border-slate-700">
+                        <i class="fa-solid fa-cubes-stacked"></i> Stok Bahan
+                    </button>
+                    <button onclick="switchTab('harga')" id="btn-tab-harga" class="nav-tab-btn flex items-center gap-2 rounded-xl bg-slate-800/90 px-4 py-3 text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700 transition border border-slate-700">
+                        <i class="fa-solid fa-tags"></i> Harga Bahan
+                    </button>
+                    <button onclick="switchTab('pengangkutan')" id="btn-tab-pengangkutan" class="nav-tab-btn flex items-center gap-2 rounded-xl bg-slate-800/90 px-4 py-3 text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700 transition border border-slate-700">
+                        <i class="fa-solid fa-truck-pickup"></i> Pengangkutan
+                    </button>
+                    <button onclick="switchTab('projek')" id="btn-tab-projek" class="nav-tab-btn flex items-center gap-2 rounded-xl bg-slate-800/90 px-4 py-3 text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700 transition border border-slate-700">
+                        <i class="fa-solid fa-city"></i> Projek
+                    </button>
+                    <button onclick="switchTab('invoice')" id="btn-tab-invoice" class="nav-tab-btn flex items-center gap-2 rounded-xl bg-slate-800/90 px-4 py-3 text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700 transition border border-slate-700">
+                        <i class="fa-solid fa-file-invoice-dollar"></i> Invois & Sebutharga
+                    </button>
+                    <button onclick="switchTab('status')" id="btn-tab-status" class="nav-tab-btn flex items-center gap-2 rounded-xl bg-slate-800/90 px-4 py-3 text-xs sm:text-sm font-bold text-slate-200 hover:bg-slate-700 transition border border-slate-700">
+                        <i class="fa-solid fa-chart-line"></i> Status Projek
+                    </button>
+                </nav>
+            </div>
+        </section>
+
+<!-- BANNER NOTIS MOD PENGGUNA (VIEW ONLY) -->
+        <div id="readonly-banner" class="hidden bg-amber-50 border-b border-amber-200 px-4 py-2.5">
+            <div class="max-w-7xl mx-auto flex items-center justify-between text-xs text-amber-800 font-medium">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-eye text-amber-600"></i>
+                    <span>Anda sedang log masuk sebagai <strong>Pengguna (Mod Pemantauan Sahaja)</strong>. Anda boleh menyemak semua rekod dan membuka paparan invois, tetapi fungsi tambah, edit, dan padam hanya dikhaskan untuk Admin.</span>
+                </div>
+            </div>
+        </div>
+
+<!-- KANDUNGAN UTAMA MODUL -->
+        <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+<!-- ========================================== -->
+            <!-- MODUL 1: STOK BAHAN BINAAN                 -->
+            <!-- ========================================== -->
+            <div id="tab-stok" class="tab-section space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-900">Pemantauan Stok Bahan Binaan</h3>
+                        <p class="text-sm text-slate-500">Rekod baki inventori bahan mentah di gudang utama dan tapak projek.</p>
+                    </div>
+                    <button onclick="openFormModal('stok')" class="admin-only-btn rounded-xl bg-industrial-accent px-4 py-2.5 text-xs font-bold text-white shadow hover:bg-orange-600 transition flex items-center gap-2 self-start">
+                        <i class="fa-solid fa-plus"></i> Tambah Stok Bahan
+                    </button>
+                </div>
+
+<div class="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    <th class="p-4">Kod & Nama Bahan</th>
+                                    <th class="p-4">Kategori</th>
+                                    <th class="p-4">Kuantiti Semasa</th>
+                                    <th class="p-4">Lokasi Simpanan</th>
+                                    <th class="p-4">Status Inventori</th>
+                                    <th class="p-4 text-right admin-only-col">Tindakan Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-stok" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+<!-- ========================================== -->
+            <!-- MODUL 2: HARGA BAHAN PASARAN               -->
+            <!-- ========================================== -->
+            <div id="tab-harga" class="tab-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-900">Senarai Harga Bahan & Perbandingan Pembekal</h3>
+                        <p class="text-sm text-slate-500">Rujukan harga semasa pasaran pembinaan bagi penyediaan sebutharga dan pembelian.</p>
+                    </div>
+                    <button onclick="openFormModal('harga')" class="admin-only-btn rounded-xl bg-industrial-accent px-4 py-2.5 text-xs font-bold text-white shadow hover:bg-orange-600 transition flex items-center gap-2 self-start">
+                        <i class="fa-solid fa-plus"></i> Tambah Harga Bahan
+                    </button>
+                </div>
+
+<div class="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    <th class="p-4">Bahan Pembinaan</th>
+                                    <th class="p-4">Unit</th>
+                                    <th class="p-4">Pembekal Utama</th>
+                                    <th class="p-4">Harga Seunit (RM)</th>
+                                    <th class="p-4">Tarikh Kemaskini</th>
+                                    <th class="p-4 text-right admin-only-col">Tindakan Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-harga" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+<!-- ========================================== -->
+            <!-- MODUL 3: PENGANGKUTAN & LOGISTIK           -->
+            <!-- ========================================== -->
+            <div id="tab-pengangkutan" class="tab-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-900">Pengangkutan & Logistik Tapak Bina</h3>
+                        <p class="text-sm text-slate-500">Jadual pergerakan lori penghantaran bahan, kren, dan jentera berat.</p>
+                    </div>
+                    <button onclick="openFormModal('pengangkutan')" class="admin-only-btn rounded-xl bg-industrial-accent px-4 py-2.5 text-xs font-bold text-white shadow hover:bg-orange-600 transition flex items-center gap-2 self-start">
+                        <i class="fa-solid fa-plus"></i> Rekod Penghantaran Baru
+                    </button>
+                </div>
+
+<div class="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    <th class="p-4">No. Kenderaan & Jenis</th>
+                                    <th class="p-4">Pemandu</th>
+                                    <th class="p-4">Muatan / Bahan</th>
+                                    <th class="p-4">Destinasi Projek</th>
+                                    <th class="p-4">Kos Trip (RM)</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right admin-only-col">Tindakan Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-pengangkutan" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+<!-- ========================================== -->
+            <!-- MODUL 4: SENARAI PROJEK PEMBINAAN          -->
+            <!-- ========================================== -->
+            <div id="tab-projek" class="tab-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-900">Senarai Kontrak & Projek Pembinaan</h3>
+                        <p class="text-sm text-slate-500">Rekod projek pembinaan bangunan komersial, kediaman, dan infrastruktur.</p>
+                    </div>
+                    <button onclick="openFormModal('projek')" class="admin-only-btn rounded-xl bg-industrial-accent px-4 py-2.5 text-xs font-bold text-white shadow hover:bg-orange-600 transition flex items-center gap-2 self-start">
+                        <i class="fa-solid fa-plus"></i> Daftar Projek Baru
+                    </button>
+                </div>
+
+<div id="grid-projek" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+            </div>
+
+<!-- ========================================== -->
+            <!-- MODUL 5: INVOIS & SEBUTHARGA (KEY-IN + VIEW)-->
+            <!-- ========================================== -->
+            <div id="tab-invoice" class="tab-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-900">Pengurusan Invois, Sebutharga & Kewangan</h3>
+                        <p class="text-sm text-slate-500">Klik pada mana-mana <strong>No. Rujukan / Invois</strong> untuk memaparkan dokumen rasmi syarikat dan mencetak.</p>
+                    </div>
+                    <button onclick="openFormModal('invoice')" class="admin-only-btn rounded-xl bg-industrial-accent px-4 py-2.5 text-xs font-bold text-white shadow hover:bg-orange-600 transition flex items-center gap-2 self-start">
+                        <i class="fa-solid fa-plus"></i> Key-In Invois / Sebutharga Baru
+                    </button>
+                </div>
+
+<div class="rounded-2xl bg-white shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    <th class="p-4">No. Invois / Sebutharga</th>
+                                    <th class="p-4">Kategori Dokumen</th>
+                                    <th class="p-4">Pelanggan / Pembekal</th>
+                                    <th class="p-4">Jumlah (RM)</th>
+                                    <th class="p-4">Tarikh</th>
+                                    <th class="p-4">Status</th>
+                                    <th class="p-4 text-right admin-only-col">Tindakan Admin</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-invoice" class="divide-y divide-slate-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+<!-- ========================================== -->
+            <!-- MODUL 6: STATUS & KEMAJUAN PROJEK          -->
+            <!-- ========================================== -->
+            <div id="tab-status" class="tab-section hidden space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-900">Laporan Status & Kemajuan Kerja Tapak</h3>
+                        <p class="text-sm text-slate-500">Pemantauan peratusan siap kerja struktur bangunan, M&E, dan kemasan.</p>
+                    </div>
+                </div>
+
+<div id="list-status-projek" class="space-y-4"></div>
+            </div>
+
+</main>
+
+<!-- CATATAN KAKI (FOOTER) -->
+        <footer class="bg-industrial-dark text-slate-400 py-6 px-4 border-t border-slate-800 mt-auto">
+            <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                <p class="font-semibold text-slate-300">© 2026 SRI BUDINAR SOLUTION SDN BHD. Hak Cipta Terpelihara.</p>
+                <p>Sistem Pengurusan Kontraktor Pembinaan & Kejuruteraan Awam</p>
+            </div>
+        </footer>
+    </div>
+
+<!-- ========================================== -->
+    <!-- MODAL BORANG KEY-IN / EDIT (ADMIN SAHAJA)  -->
+    <!-- ========================================== -->
+    <div id="form-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/75 p-4 backdrop-blur-sm">
+        <div class="w-full max-w-lg rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="bg-industrial-dark px-6 py-4 text-white flex items-center justify-between">
+                <h4 id="form-modal-title" class="text-base font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-industrial-accent"></i> Borang Rekod
+                </h4>
+                <button onclick="closeFormModal()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="dynamic-record-form" onsubmit="saveRecordSubmit(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <div id="form-modal-fields" class="space-y-4"></div>
+                <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+                    <button type="button" onclick="closeFormModal()" class="rounded-xl border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="rounded-xl bg-industrial-accent px-5 py-2.5 text-xs font-bold text-white shadow hover:bg-orange-600 transition flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk"></i> Simpan Rekod
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<!-- ========================================== -->
+    <!-- MODAL PAPARAN DOKUMEN INVOIS / SEBUTHARGA  -->
+    <!-- ========================================== -->
+    <div id="invoice-view-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm">
+        <div class="w-full max-w-3xl rounded-3xl bg-white shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[92vh]">
+            <!-- Bar Kawalan Modal -->
+            <div class="no-print bg-slate-100 px-6 py-3.5 border-b border-slate-200 flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">Pratonton Dokumen Rasmi</span>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="rounded-xl bg-industrial-dark px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-print"></i> Cetak / Simpan PDF
+                    </button>
+                    <button onclick="closeInvoiceModal()" class="rounded-xl bg-white border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition">
+                        Tutup
+                    </button>
+                </div>
+            </div>
+
+<!-- Kawasan Cetakan Dokumen Rasmi -->
+            <div id="invoice-print-area" class="p-6 sm:p-10 overflow-y-auto space-y-6 bg-white">
+                <!-- Kepala Syarikat -->
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b-2 border-slate-900 pb-6">
+                    <div>
+                        <div class="flex items-center gap-2.5">
+                            <div class="h-10 w-10 rounded-xl bg-industrial-accent text-white flex items-center justify-center">
+                                <i class="fa-solid fa-building-shield text-lg"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-extrabold text-slate-900 tracking-tight">SRI BUDINAR SOLUTION SDN BHD</h2>
+                                <p class="text-[11px] text-slate-500">No. Pendaftaran Syarikat: 202101045892 (1446192-X)</p>
+                            </div>
+                        </div>
+                        <p class="text-xs text-slate-600 mt-3 leading-relaxed">
+                            Lot 48, Kawasan Perindustrian Pembinaan,<br>
+                            40150 Shah Alam, Selangor Darul Ehsan.<br>
+                            Tel: 03-5548 8920 | Emel: kewangan@sribudinar.com.my
+                        </p>
+                    </div>
+                    <div class="sm:text-right">
+                        <span id="inv-doc-badge" class="inline-block rounded-lg bg-orange-100 text-industrial-accent px-3 py-1 text-xs font-extrabold uppercase tracking-wider">INVOIS RASMI</span>
+                        <h3 id="inv-doc-number" class="text-2xl font-extrabold text-slate-900 mt-2">INV-2026-091</h3>
+                        <p class="text-xs text-slate-500 mt-1">Tarikh Dokumen: <strong id="inv-doc-date" class="text-slate-800">10 Nov 2026</strong></p>
+                        <p class="text-xs text-slate-500">Status: <strong id="inv-doc-status" class="text-emerald-600">Lulus (Dibayar)</strong></p>
+                    </div>
+                </div>
+
+<!-- Maklumat Pihak Berkaitan -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <div>
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kepada / Pihak Berkaitan:</p>
+                        <p id="inv-doc-client" class="text-base font-extrabold text-slate-900 mt-1">Setia Holdings Bhd</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Bahagian Pengurusan Projek & Kontrak Pembinaan</p>
+                    </div>
+                    <div class="sm:text-right">
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kategori Transaksi:</p>
+                        <p id="inv-doc-type" class="text-sm font-bold text-slate-800 mt-1">Invois Pelanggan (Masuk)</p>
+                        <p class="text-xs text-slate-500 mt-0.5">Terma Bayaran: 30 Hari dari Tarikh Invois</p>
+                    </div>
+                </div>
+
+<!-- Jadual Butiran Kerja / Item -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-900 text-white text-xs uppercase tracking-wider">
+                                <th class="p-3.5">Bil</th>
+                                <th class="p-3.5">Keterangan Kerja / Bahan Binaan</th>
+                                <th class="p-3.5 text-center">Kuantiti</th>
+                                <th class="p-3.5 text-right">Amaun (RM)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inv-doc-items" class="divide-y divide-slate-200 text-xs sm:text-sm"></tbody>
+                    </table>
+                </div>
+
+<!-- Jumlah Keseluruhan -->
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 pt-2">
+                    <div class="text-xs text-slate-500 space-y-1">
+                        <p class="font-bold text-slate-700">Maklumat Pembayaran Bank:</p>
+                        <p>Nama Akaun: <strong>SRI BUDINAR SOLUTION SDN BHD</strong></p>
+                        <p>Bank: Maybank Islamic Berhad | No. Akaun: <strong>5621 8840 9912</strong></p>
+                    </div>
+                    <div class="w-full sm:w-64 rounded-2xl bg-slate-900 text-white p-4">
+                        <div class="flex justify-between text-xs text-slate-300 mb-1">
+                            <span>Caj SST (0%):</span>
+                            <span>RM 0.00</span>
+                        </div>
+                        <div class="flex justify-between items-center border-t border-slate-700 pt-2 mt-2">
+                            <span class="text-xs font-bold uppercase">Jumlah Besar:</span>
+                            <span id="inv-doc-total" class="text-lg font-extrabold text-orange-400">RM 450,000</span>
+                        </div>
+                    </div>
+                </div>
+
+<!-- Paparan Fail Lampiran Sebutharga / Invois Luar (Jika Ada) -->
+                <div id="inv-attachment-container" class="hidden pt-4 border-t border-slate-200 space-y-3">
+                    <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-100 px-4 py-2.5 rounded-xl border border-slate-200">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-paperclip text-industrial-accent"></i>
+                            <span class="text-xs font-extrabold text-slate-800">Fail Lampiran Sebutharga / Dokumen Luar:</span>
+                            <span id="inv-attachment-filename" class="text-xs font-medium text-slate-600 truncate max-w-[200px] sm:max-w-xs"></span>
+                        </div>
+                        <a id="inv-attachment-download" href="#" download="lampiran" class="no-print rounded-lg bg-industrial-accent px-3 py-1.5 text-xs font-bold text-white hover:bg-orange-600 transition inline-flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> Muat Turun Fail
+                        </a>
+                    </div>
+                    <div id="inv-attachment-preview" class="rounded-2xl border border-slate-300 bg-slate-50 overflow-hidden flex items-center justify-center p-2"></div>
+                </div>
+
+<!-- Tandatangan -->
+                <div class="pt-8 border-t border-slate-200 flex justify-between text-xs text-slate-500">
+                    <div>
+                        <p>Disediakan Oleh,</p>
+                        <div class="h-10"></div>
+                        <p class="font-bold text-slate-800 border-t border-slate-400 pt-1 inline-block">Jabatan Kewangan & Kontrak</p>
+                        <p>SRI BUDINAR SOLUTION SDN BHD</p>
+                    </div>
+                    <div class="text-right">
+                        <p>Pengesahan Penerimaan,</p>
+                        <div class="h-10"></div>
+                        <p class="font-bold text-slate-800 border-t border-slate-400 pt-1 inline-block">Cop Rasmi & Tandatangan</p>
+                        <p>Pelanggan / Pembekal</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- ========================================== -->
+    <!-- LOGIK JAVASCRIPT & LOCALSTORAGE            -->
+    <!-- ========================================== -->
+    <script>
+        const STORAGE_KEY = 'sri_budinar_construction_system_v1';
+
+        // Data Lalai (Default) Realistik Pembinaan Bangunan di Malaysia
+        const defaultSystemData = {
+            stok: [
+                { kod: 'BHN-001', nama: 'Besi Tetulang Baja Y16 (12m)', kategori: 'Struktur Besi', kuantiti: '48 Tan', lokasi: 'Gudang Utama Shah Alam', status: 'Mencukupi' },
+                { kod: 'BHN-002', nama: 'Simen OPC YTL (Beg 50kg)', kategori: 'Simen & Konkrit', kuantiti: '320 Beg', lokasi: 'Tapak Menara Setia', status: 'Stok Rendah' },
+                { kod: 'BHN-003', nama: 'Bata Tanah Liat Merah', kategori: 'Dinding & Bata', kuantiti: '28,500 Unit', lokasi: 'Gudang Utama Shah Alam', status: 'Mencukupi' },
+                { kod: 'BHN-004', nama: 'Pasir Sungai Kasar (Cuci)', kategori: 'Agregat & Pasir', kuantiti: '65 Tan', lokasi: 'Tapak Kondominium Duta', status: 'Stok Rendah' }
+            ],
+            harga: [
+                { bahan: 'Simen OPC (Beg 50kg)', unit: 'Beg', pembekal: 'Mega Simen Sdn Bhd', harga: 'RM 21.50', tarikh: '15 Nov 2026' },
+                { bahan: 'Besi Baja Y16 High Tensile', unit: 'Tan Metrik', pembekal: 'Besi Baja Raya Bhd', harga: 'RM 3,080.00', tarikh: '14 Nov 2026' },
+                { bahan: 'Konkrit Siap Bancuh Gred 30', unit: 'Meter Padu (m³)', pembekal: 'Lafarge ReadyMix', harga: 'RM 265.00', tarikh: '12 Nov 2026' },
+                { bahan: 'Bata Simen Pasir (Pallet)', unit: '600 Unit / Pallet', pembekal: 'Klang Brickworks', harga: 'RM 210.00', tarikh: '10 Nov 2026' }
+            ],
+            pengangkutan: [
+                { lori: 'WXY 4521 (Lori Tipper 10 Tan)', pemandu: 'En. Ahmad Razak', muatan: 'Pasir Sungai Kasar (20 Tan)', destinasi: 'Projek Menara Setia Sky, KL', kos: 'RM 450', status: 'Dalam Perjalanan' },
+                { lori: 'BKM 8812 (Lori Kren 15 Tan)', pemandu: 'En. Muthu Kumar', muatan: 'Besi Tetulang Y16 & Y20', destinasi: 'Tapak Kondominium Duta', kos: 'RM 850', status: 'Selesai Dihantar' },
+                { lori: 'VJK 3390 (Treler Flatbed)', pemandu: 'En. Hafizul Nizam', muatan: 'Panel IBS & Acuan Konkrit', destinasi: 'Kilang Industri Bukit Raja', kos: 'RM 1,150', status: 'Dijadualkan' }
+            ],
+            projek: [
+                { nama: 'Pembinaan Menara Pejabat 18 Tingkat Setia Sky', klien: 'Setia Holdings Bhd', nilai: 'RM 14,500,000', pengurus: 'Ir. Zulkifli Hamid', siap: '15 Dis 2026', fasa: 'Kerja Struktur & M&E', peratus: 78 },
+                { nama: 'Pembangunan Kondominium Mewah Duta Residence', klien: 'Duta Land Berhad', nilai: 'RM 22,800,000', pengurus: 'Ir. Noraini Ismail', siap: '30 Jun 2027', fasa: 'Kerja Cerucuk & Asas', peratus: 42 },
+                { nama: 'Kompleks Gudang Logistik & Pejabat Bukit Raja', klien: 'Sime Logistics Sdn Bhd', nilai: 'RM 8,900,000', pengurus: 'En. Tan Wei Ming', siap: '20 Feb 2026', fasa: 'Kemasan Dalaman & CCC', peratus: 92 },
+                { nama: 'Pusat Komersial & Lot Kedai 3 Tingkat Cyberjaya', klien: 'Cyberview Development', nilai: 'RM 6,400,000', pengurus: 'En. Faizal Roslan', siap: '30 Nov 2027', fasa: 'Kerja Tanah & Tapak', peratus: 18 }
+            ],
+            invoice: [
+                {
+                    no: 'INV-2026-091',
+                    kategori: 'Invois Pelanggan (Masuk)',
+                    pihak: 'Setia Holdings Bhd',
+                    item: 'Tuntutan Kemajuan Kerja No. 6 - Struktur Konkrit & Besi Tingkat 12-18',
+                    jumlah: 'RM 450,000',
+                    tarikh: '10 Nov 2026',
+                    status: 'Lulus (Dibayar)'
+                },
+                {
+                    no: 'QTN-2026-045',
+                    kategori: 'Sebutharga (Quotation)',
+                    pihak: 'Sime Darby Property',
+                    item: 'Cadangan Sebutharga Kerja Infrastruktur, Jalan & Sistem Perparitan Fasa 2',
+                    jumlah: 'RM 320,000',
+                    tarikh: '14 Nov 2026',
+                    status: 'Dihantar'
+                },
+                {
+                    no: 'INV-2026-088',
+                    kategori: 'Invois Pembekal (Keluar)',
+                    pihak: 'Mega Simen Sdn Bhd',
+                    item: 'Pembelian Pukal Simen OPC (2,500 Beg) & Konkrit Gred 35',
+                    jumlah: 'RM 85,000',
+                    tarikh: '08 Nov 2026',
+                    status: 'Menunggu Bayaran'
+                },
+                {
+                    no: 'INV-2026-085',
+                    kategori: 'Invois Pembekal (Keluar)',
+                    pihak: 'Besi Baja Raya Bhd',
+                    item: 'Bekalan Besi Tetulang Y16 & Y20 (45 Tan Metrik) ke Tapak Bina',
+                    jumlah: 'RM 142,000',
+                    tarikh: '02 Nov 2026',
+                    status: 'Lulus (Dibayar)'
+                }
+            ]
+        };
+
+        let systemData = loadDataFromStorage();
+        let currentRole = 'pengguna'; // 'admin' atau 'pengguna'
+        let activeModalModule = '';
+        let editRecordIndex = null;
+        let uploadedAttachmentData = null;
+
+        function loadDataFromStorage() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY);
+                if (raw) {
+                    return JSON.parse(raw);
+                }
+            } catch (err) {
+                console.error('Ralat membaca LocalStorage:', err);
+            }
+            return JSON.parse(JSON.stringify(defaultSystemData));
+        }
+
+        function saveDataToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(systemData));
+                return true;
+            } catch (err) {
+                console.error('Ralat menyimpan LocalStorage:', err);
+                showFormError('Kapasiti simpanan pelayar (LocalStorage) penuh! Sila guna fail lampiran bersaiz lebih kecil.');
+                return false;
+            }
+        }
+
+        // Auto-isi demo apabila tukar dropdown peranan di skrin login
+        function autofillDemoCredentials() {
+            const role = document.getElementById('login-role').value;
+            if (role === 'admin') {
+                document.getElementById('login-username').value = 'admin';
+                document.getElementById('login-password').value = 'admin123';
+            } else {
+                document.getElementById('login-username').value = 'pengguna';
+                document.getElementById('login-password').value = 'user123';
+            }
+        }
+
+        // Proses Log Masuk
+        function handleLogin(event) {
+            event.preventDefault();
+            const role = document.getElementById('login-role').value;
+            const user = document.getElementById('login-username').value.trim();
+            const pass = document.getElementById('login-password').value.trim();
+            const errorBox = document.getElementById('login-error');
+
+            let valid = false;
+            if (role === 'admin' && user === 'admin' && pass === 'admin123') {
+                valid = true;
+            } else if (role === 'pengguna' && user === 'pengguna' && pass === 'user123') {
+                valid = true;
+            }
+
+            if (!valid) {
+                errorBox.classList.remove('hidden');
+                document.getElementById('login-error-msg').innerText =
+                    role === 'admin'
+                        ? 'Akses Admin ditolak! Sila guna ID: admin & Kata Laluan: admin123'
+                        : 'Akses Pengguna ditolak! Sila guna ID: pengguna & Kata Laluan: user123';
+                return;
+            }
+
+            errorBox.classList.add('hidden');
+            currentRole = role;
+            systemData = loadDataFromStorage();
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+
+            applyRoleUI();
+            renderAllModules();
+        }
+
+        // Proses Log Keluar
+        function handleLogout() {
+            currentRole = 'pengguna';
+            editRecordIndex = null;
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('login-form').reset();
+        }
+
+        // Kawalan Paparan Mengikut Peranan (Admin vs Pengguna)
+        function applyRoleUI() {
+            const isAdmin = currentRole === 'admin';
+            const badgeText = document.getElementById('user-display-info');
+            const dot = document.getElementById('role-status-dot');
+            const readonlyBanner = document.getElementById('readonly-banner');
+
+            if (isAdmin) {
+                badgeText.innerText = 'Admin Sistem (Akses Penuh)';
+                dot.className = 'h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse';
+                readonlyBanner.classList.add('hidden');
+            } else {
+                badgeText.innerText = 'Pengguna (Mod Pemantauan)';
+                dot.className = 'h-2.5 w-2.5 rounded-full bg-amber-400';
+                readonlyBanner.classList.remove('hidden');
+            }
+
+            document.querySelectorAll('.admin-only-btn').forEach(btn => {
+                btn.style.display = isAdmin ? 'inline-flex' : 'none';
+            });
+
+            document.querySelectorAll('.admin-only-col').forEach(col => {
+                col.style.display = isAdmin ? '' : 'none';
+            });
+        }
+
+        // Tukar Tab Modul
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-section').forEach(sec => sec.classList.add('hidden'));
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('nav-btn-active'));
+            document.getElementById('btn-tab-' + tabName).classList.add('nav-btn-active');
+        }
+
+        // Render Semua Modul & Statistik
+        function renderAllModules() {
+            applyRoleUI();
+            renderStok();
+            renderHarga();
+            renderPengangkutan();
+            renderProjek();
+            renderInvoice();
+            renderStatusProjek();
+
+            document.getElementById('stat-projek').innerText = systemData.projek.length;
+            document.getElementById('stat-stok').innerText = systemData.stok.length;
+            document.getElementById('stat-lori').innerText = systemData.pengangkutan.length;
+            document.getElementById('stat-invoice').innerText = systemData.invoice.length;
+        }
+
+        // 1. Render Stok Bahan
+        function renderStok() {
+            const tbody = document.getElementById('tbody-stok');
+            const isAdmin = currentRole === 'admin';
+            tbody.innerHTML = '';
+
+            systemData.stok.forEach((item, idx) => {
+                const badge = item.status === 'Mencukupi'
+                    ? 'bg-emerald-100 text-emerald-700 border border-emerald-200'
+                    : 'bg-amber-100 text-amber-700 border border-amber-200';
+
+                const adminCol = isAdmin ? `
+                    <td class="p-4 text-right space-x-2">
+                        <button onclick="openEditModal('stok', ${idx})" class="text-blue-600 hover:text-blue-800 text-xs font-bold"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button onclick="deleteRecord('stok', ${idx})" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i> Padam</button>
+                    </td>` : '';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4">
+                            <span class="text-[11px] font-bold text-slate-400 block">${item.kod}</span>
+                            <span class="font-bold text-slate-800">${item.nama}</span>
+                        </td>
+                        <td class="p-4 text-slate-600">${item.kategori}</td>
+                        <td class="p-4 font-bold text-slate-900">${item.kuantiti}</td>
+                        <td class="p-4 text-slate-600">${item.lokasi}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${badge}">${item.status}</span></td>
+                        ${adminCol}
+                    </tr>
+                `;
+            });
+        }
+
+        // 2. Render Harga Bahan
+        function renderHarga() {
+            const tbody = document.getElementById('tbody-harga');
+            const isAdmin = currentRole === 'admin';
+            tbody.innerHTML = '';
+
+            systemData.harga.forEach((item, idx) => {
+                const adminCol = isAdmin ? `
+                    <td class="p-4 text-right space-x-2">
+                        <button onclick="openEditModal('harga', ${idx})" class="text-blue-600 hover:text-blue-800 text-xs font-bold"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button onclick="deleteRecord('harga', ${idx})" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i> Padam</button>
+                    </td>` : '';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4 font-bold text-slate-800">${item.bahan}</td>
+                        <td class="p-4 text-slate-600">${item.unit}</td>
+                        <td class="p-4 text-slate-600">${item.pembekal}</td>
+                        <td class="p-4 font-extrabold text-industrial-accent">${item.harga}</td>
+                        <td class="p-4 text-xs text-slate-500">${item.tarikh}</td>
+                        ${adminCol}
+                    </tr>
+                `;
+            });
+        }
+
+        // 3. Render Pengangkutan
+        function renderPengangkutan() {
+            const tbody = document.getElementById('tbody-pengangkutan');
+            const isAdmin = currentRole === 'admin';
+            tbody.innerHTML = '';
+
+            systemData.pengangkutan.forEach((item, idx) => {
+                const badge = item.status === 'Selesai Dihantar'
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : (item.status === 'Dalam Perjalanan' ? 'bg-sky-100 text-sky-700' : 'bg-amber-100 text-amber-700');
+
+                const adminCol = isAdmin ? `
+                    <td class="p-4 text-right space-x-2">
+                        <button onclick="openEditModal('pengangkutan', ${idx})" class="text-blue-600 hover:text-blue-800 text-xs font-bold"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button onclick="deleteRecord('pengangkutan', ${idx})" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i> Padam</button>
+                    </td>` : '';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4 font-bold text-slate-800">${item.lori}</td>
+                        <td class="p-4 text-slate-600">${item.pemandu}</td>
+                        <td class="p-4 text-slate-700">${item.muatan}</td>
+                        <td class="p-4 text-slate-600">${item.destinasi}</td>
+                        <td class="p-4 font-bold text-slate-800">${item.kos}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${badge}">${item.status}</span></td>
+                        ${adminCol}
+                    </tr>
+                `;
+            });
+        }
+
+        // 4. Render Senarai Projek
+        function renderProjek() {
+            const grid = document.getElementById('grid-projek');
+            const isAdmin = currentRole === 'admin';
+            grid.innerHTML = '';
+
+            systemData.projek.forEach((pr, idx) => {
+                const adminBar = isAdmin ? `
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-end gap-3">
+                        <button onclick="openEditModal('projek', ${idx})" class="text-blue-600 hover:text-blue-800 text-xs font-bold"><i class="fa-solid fa-pen"></i> Kemaskini Projek</button>
+                        <button onclick="deleteRecord('projek', ${idx})" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i> Padam</button>
+                    </div>` : '';
+
+                grid.innerHTML += `
+                    <div class="rounded-2xl bg-white p-6 shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="rounded-full bg-orange-100 text-industrial-accent px-3 py-1 text-[11px] font-bold">${pr.fasa}</span>
+                                <span class="text-xs font-extrabold text-slate-700">${pr.nilai}</span>
+                            </div>
+                            <h4 class="text-base font-extrabold text-slate-900 mb-2">${pr.nama}</h4>
+                            <div class="space-y-1 text-xs text-slate-600 bg-slate-50 p-3.5 rounded-xl border border-slate-100">
+                                <p><strong>Klien:</strong> ${pr.klien}</p>
+                                <p><strong>Pengurus Tapak:</strong> ${pr.pengurus}</p>
+                                <p><strong>Sasaran Siap:</strong> ${pr.siap}</p>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-xs font-bold mb-1">
+                                <span class="text-slate-500">Kemajuan Kerja</span>
+                                <span class="text-industrial-accent">${pr.peratus}%</span>
+                            </div>
+                            <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-industrial-accent rounded-full" style="width: ${pr.peratus}%"></div>
+                            </div>
+                            ${adminBar}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // 5. Render Invois & Sebutharga
+        function renderInvoice() {
+            const tbody = document.getElementById('tbody-invoice');
+            const isAdmin = currentRole === 'admin';
+            tbody.innerHTML = '';
+
+            systemData.invoice.forEach((inv, idx) => {
+                const badge = inv.status.includes('Lulus')
+                    ? 'bg-emerald-100 text-emerald-700'
+                    : (inv.status.includes('Dihantar') ? 'bg-sky-100 text-sky-700' : 'bg-amber-100 text-amber-700');
+
+                const attachmentBtn = inv.attachment ? `
+                    <button onclick="openInvoicePreview(${idx}, true)" title="Lihat Fail Lampiran: ${inv.attachment.name}" class="mt-1.5 inline-flex items-center gap-1 rounded-md bg-orange-50 border border-orange-200 px-2 py-0.5 text-[11px] font-bold text-industrial-accent hover:bg-orange-100 transition">
+                        <i class="fa-solid fa-paperclip"></i> Lihat Lampiran
+                    </button>` : '';
+
+                const adminCol = isAdmin ? `
+                    <td class="p-4 text-right space-x-2">
+                        <button onclick="openEditModal('invoice', ${idx})" class="text-blue-600 hover:text-blue-800 text-xs font-bold"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button onclick="deleteRecord('invoice', ${idx})" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i> Padam</button>
+                    </td>` : '';
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4">
+                            <button onclick="openInvoicePreview(${idx})" class="text-industrial-accent hover:text-orange-700 font-extrabold underline flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-invoice"></i> ${inv.no}
+                            </button>
+                            ${attachmentBtn}
+                        </td>
+                        <td class="p-4 text-slate-600 font-medium">${inv.kategori}</td>
+                        <td class="p-4 font-semibold text-slate-800">${inv.pihak}</td>
+                        <td class="p-4 font-extrabold text-slate-900">${inv.jumlah}</td>
+                        <td class="p-4 text-xs text-slate-500">${inv.tarikh}</td>
+                        <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-bold ${badge}">${inv.status}</span></td>
+                        ${adminCol}
+                    </tr>
+                `;
+            });
+        }
+
+        // 6. Render Status & Kemajuan Projek
+        function renderStatusProjek() {
+            const container = document.getElementById('list-status-projek');
+            container.innerHTML = '';
+
+            systemData.projek.forEach(pr => {
+                const statusLabel = pr.peratus >= 85 ? 'Hampir Siap' : (pr.peratus >= 40 ? 'Fasa Pembinaan Aktif' : 'Peringkat Awal');
+                const statusColor = pr.peratus >= 85 ? 'text-emerald-600 bg-emerald-50 border-emerald-200' : 'text-orange-600 bg-orange-50 border-orange-200';
+
+                container.innerHTML += `
+                    <div class="rounded-2xl bg-white p-5 shadow-sm border border-slate-200">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                            <div>
+                                <h4 class="font-extrabold text-slate-900">${pr.nama}</h4>
+                                <p class="text-xs text-slate-500">Klien: ${pr.klien} | Pengurus Tapak: ${pr.pengurus}</p>
+                            </div>
+                            <span class="self-start sm:self-center px-3 py-1 rounded-full text-xs font-bold border ${statusColor}">${statusLabel} (${pr.peratus}%)</span>
+                        </div>
+                        <div class="w-full h-3.5 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-orange-500 to-amber-500 rounded-full transition-all duration-500" style="width: ${pr.peratus}%"></div>
+                        </div>
+                        <div class="mt-2 flex justify-between text-[11px] text-slate-500 font-medium">
+                            <span>Fasa Semasa: <strong class="text-slate-700">${pr.fasa}</strong></span>
+                            <span>Tarikh Sasaran Siap: <strong class="text-slate-700">${pr.siap}</strong></span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Buka Modal Paparan Dokumen Invois / Sebutharga (Boleh diakses oleh Admin & Pengguna)
+        function openInvoicePreview(index, focusAttachment = false) {
+            const inv = systemData.invoice[index];
+            if (!inv) return;
+
+            const isQuote = inv.kategori.toLowerCase().includes('sebutharga') || inv.no.toUpperCase().startsWith('QTN');
+            document.getElementById('inv-doc-badge').innerText = isQuote ? 'SEBUTHARGA RASMI' : 'INVOIS RASMI';
+            document.getElementById('inv-doc-number').innerText = inv.no;
+            document.getElementById('inv-doc-date').innerText = inv.tarikh;
+            document.getElementById('inv-doc-status').innerText = inv.status;
+            document.getElementById('inv-doc-client').innerText = inv.pihak;
+            document.getElementById('inv-doc-type').innerText = inv.kategori;
+            document.getElementById('inv-doc-total').innerText = inv.jumlah;
+
+            document.getElementById('inv-doc-items').innerHTML = `
+                <tr>
+                    <td class="p-3.5 font-semibold text-slate-600">1</td>
+                    <td class="p-3.5 font-semibold text-slate-900">${inv.item || 'Kerja Pembinaan & Bekalan Bahan Binaan'}</td>
+                    <td class="p-3.5 text-center text-slate-600">1 Lot</td>
+                    <td class="p-3.5 text-right font-extrabold text-slate-900">${inv.jumlah}</td>
+                </tr>
+            `;
+
+            const attContainer = document.getElementById('inv-attachment-container');
+            const attPreview = document.getElementById('inv-attachment-preview');
+            const attFilename = document.getElementById('inv-attachment-filename');
+            const attDownload = document.getElementById('inv-attachment-download');
+
+            if (inv.attachment && inv.attachment.dataUrl) {
+                attContainer.classList.remove('hidden');
+                attFilename.innerText = inv.attachment.name;
+                attDownload.href = inv.attachment.dataUrl;
+                attDownload.setAttribute('download', inv.attachment.name);
+
+                if (inv.attachment.type === 'application/pdf') {
+                    attPreview.innerHTML = `<iframe src="${inv.attachment.dataUrl}" class="w-full h-[460px] rounded-xl border-0" title="Pratonton PDF Sebutharga"></iframe>`;
+                } else if (inv.attachment.type.startsWith('image/')) {
+                    attPreview.innerHTML = `<img src="${inv.attachment.dataUrl}" alt="${inv.attachment.name}" class="max-h-[480px] w-auto rounded-xl object-contain shadow-sm">`;
+                } else {
+                    attPreview.innerHTML = `<p class="text-xs text-slate-600 py-6">Fail lampiran sedia untuk dimuat turun menggunakan butang di atas.</p>`;
+                }
+            } else {
+                attContainer.classList.add('hidden');
+                attPreview.innerHTML = '';
+            }
+
+            document.getElementById('invoice-view-modal').classList.remove('hidden');
+
+            if (focusAttachment && inv.attachment) {
+                setTimeout(() => {
+                    attContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 100);
+            }
+        }
+
+        function closeInvoiceModal() {
+            document.getElementById('invoice-view-modal').classList.add('hidden');
+        }
+
+        // Buka Modal Tambah / Edit (Admin Sahaja)
+        function openFormModal(moduleName) {
+            if (currentRole !== 'admin') return;
+            editRecordIndex = null;
+            buildFormModal(moduleName, null);
+        }
+
+        function openEditModal(moduleName, index) {
+            if (currentRole !== 'admin') return;
+            editRecordIndex = index;
+            buildFormModal(moduleName, systemData[moduleName][index]);
+        }
+
+        function buildFormModal(moduleName, data) {
+            activeModalModule = moduleName;
+            uploadedAttachmentData = (data && data.attachment) ? data.attachment : null;
+            const isEdit = data !== null;
+            const fields = document.getElementById('form-modal-fields');
+            const title = document.getElementById('form-modal-title');
+            fields.innerHTML = '';
+
+            if (moduleName === 'stok') {
+                title.innerHTML = `<i class="fa-solid fa-cubes-stacked text-industrial-accent"></i> ${isEdit ? 'Kemaskini Stok Bahan' : 'Tambah Stok Bahan Baru'}`;
+                fields.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Kod Bahan</label>
+                        <input type="text" id="f-kod" required value="${isEdit ? data.kod : 'BHN-00' + (systemData.stok.length + 1)}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Nama Bahan Binaan</label>
+                        <input type="text" id="f-nama" required value="${isEdit ? data.nama : ''}" placeholder="cth: Besi Baja Y12" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Kategori</label>
+                        <input type="text" id="f-kategori" required value="${isEdit ? data.kategori : ''}" placeholder="cth: Struktur Besi / Simen" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Kuantiti Semasa</label>
+                            <input type="text" id="f-kuantiti" required value="${isEdit ? data.kuantiti : ''}" placeholder="cth: 35 Tan" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Status Stok</label>
+                            <select id="f-status" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white">
+                                <option value="Mencukupi" ${isEdit && data.status === 'Mencukupi' ? 'selected' : ''}>Mencukupi</option>
+                                <option value="Stok Rendah" ${isEdit && data.status === 'Stok Rendah' ? 'selected' : ''}>Stok Rendah</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Lokasi Gudang / Tapak</label>
+                        <input type="text" id="f-lokasi" required value="${isEdit ? data.lokasi : ''}" placeholder="cth: Gudang Utama Shah Alam" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                `;
+            } else if (moduleName === 'harga') {
+                title.innerHTML = `<i class="fa-solid fa-tags text-industrial-accent"></i> ${isEdit ? 'Kemaskini Harga Bahan' : 'Tambah Harga Bahan Pasaran'}`;
+                fields.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Nama Bahan</label>
+                        <input type="text" id="f-bahan" required value="${isEdit ? data.bahan : ''}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Unit Ukuran</label>
+                            <input type="text" id="f-unit" required value="${isEdit ? data.unit : ''}" placeholder="cth: Beg 50kg / Tan" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Harga Seunit (RM)</label>
+                            <input type="text" id="f-harga" required value="${isEdit ? data.harga : ''}" placeholder="cth: RM 22.00" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Nama Pembekal</label>
+                        <input type="text" id="f-pembekal" required value="${isEdit ? data.pembekal : ''}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Tarikh Kemaskini</label>
+                        <input type="text" id="f-tarikh" required value="${isEdit ? data.tarikh : '17 Nov 2026'}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                `;
+            } else if (moduleName === 'pengangkutan') {
+                title.innerHTML = `<i class="fa-solid fa-truck-pickup text-industrial-accent"></i> ${isEdit ? 'Kemaskini Rekod Pengangkutan' : 'Rekod Penghantaran Lori Baru'}`;
+                fields.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">No. Pendaftaran & Jenis Kenderaan</label>
+                        <input type="text" id="f-lori" required value="${isEdit ? data.lori : ''}" placeholder="cth: WXY 4521 (Lori 10 Tan)" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Nama Pemandu</label>
+                        <input type="text" id="f-pemandu" required value="${isEdit ? data.pemandu : ''}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Muatan / Bahan Dibawa</label>
+                        <input type="text" id="f-muatan" required value="${isEdit ? data.muatan : ''}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Destinasi Tapak Projek</label>
+                        <input type="text" id="f-destinasi" required value="${isEdit ? data.destinasi : ''}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Kos Logistik (RM)</label>
+                            <input type="text" id="f-kos" required value="${isEdit ? data.kos : ''}" placeholder="cth: RM 500" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Status</label>
+                            <select id="f-statuslori" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white">
+                                <option value="Dalam Perjalanan" ${isEdit && data.status === 'Dalam Perjalanan' ? 'selected' : ''}>Dalam Perjalanan</option>
+                                <option value="Selesai Dihantar" ${isEdit && data.status === 'Selesai Dihantar' ? 'selected' : ''}>Selesai Dihantar</option>
+                                <option value="Dijadualkan" ${isEdit && data.status === 'Dijadualkan' ? 'selected' : ''}>Dijadualkan</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+            } else if (moduleName === 'projek') {
+                title.innerHTML = `<i class="fa-solid fa-city text-industrial-accent"></i> ${isEdit ? 'Kemaskini Projek Pembinaan' : 'Daftar Projek Pembinaan Baru'}`;
+                fields.innerHTML = `
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Nama Projek Pembinaan</label>
+                        <input type="text" id="f-namaproj" required value="${isEdit ? data.nama : ''}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Nama Klien</label>
+                            <input type="text" id="f-klien" required value="${isEdit ? data.klien : ''}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Nilai Kontrak (RM)</label>
+                            <input type="text" id="f-nilai" required value="${isEdit ? data.nilai : ''}" placeholder="cth: RM 12,000,000" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Pengurus Tapak</label>
+                            <input type="text" id="f-pengurus" required value="${isEdit ? data.pengurus : ''}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Tarikh Siap</label>
+                            <input type="text" id="f-siap" required value="${isEdit ? data.siap : ''}" placeholder="cth: 30 Dis 2027" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Fasa Semasa</label>
+                            <input type="text" id="f-fasa" required value="${isEdit ? data.fasa : ''}" placeholder="cth: Kerja Struktur" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Peratus Kemajuan (%)</label>
+                            <input type="number" min="0" max="100" id="f-peratus" required value="${isEdit ? data.peratus : 15}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                    </div>
+                `;
+            } else if (moduleName === 'invoice') {
+                title.innerHTML = `<i class="fa-solid fa-file-invoice-dollar text-industrial-accent"></i> ${isEdit ? 'Kemaskini Invois / Sebutharga' : 'Key-In Invois / Sebutharga Baru'}`;
+                const existingFileLabel = (isEdit && data.attachment)
+                    ? `<p id="f-file-status" class="text-[11px] font-semibold text-emerald-600 mt-1"><i class="fa-solid fa-circle-check"></i> Fail sedia ada: ${data.attachment.name}</p>`
+                    : `<p id="f-file-status" class="text-[11px] text-slate-500 mt-1">Format disokong: PDF, JPG, PNG, WEBP (Maksimum 3MB)</p>`;
+
+                fields.innerHTML = `
+                    <div id="form-upload-error" class="hidden rounded-xl bg-red-50 border border-red-200 p-2.5 text-xs font-medium text-red-600"></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">No. Invois / Sebutharga</label>
+                            <input type="text" id="f-noinv" required value="${isEdit ? data.no : 'INV-2026-09' + (systemData.invoice.length + 1)}" placeholder="cth: INV-2026-095 / QTN-2026-050" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Kategori Dokumen</label>
+                            <select id="f-katinv" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white">
+                                <option value="Invois Pelanggan (Masuk)" ${isEdit && data.kategori.includes('Pelanggan') ? 'selected' : ''}>Invois Pelanggan (Masuk)</option>
+                                <option value="Sebutharga (Quotation)" ${isEdit && data.kategori.includes('Sebutharga') ? 'selected' : ''}>Sebutharga (Quotation)</option>
+                                <option value="Invois Pembekal (Keluar)" ${isEdit && data.kategori.includes('Pembekal') ? 'selected' : ''}>Invois Pembekal (Keluar)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Nama Pelanggan / Pembekal</label>
+                        <input type="text" id="f-pihak" required value="${isEdit ? data.pihak : ''}" placeholder="cth: Setia Holdings Bhd" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-600 mb-1">Butiran Kerja / Item Projek</label>
+                        <textarea id="f-item" rows="2" required placeholder="cth: Kerja pembinaan struktur bangunan & bekalan bahan..." class="w-full rounded-xl border border-slate-300 px-3.5 py-2 text-sm">${isEdit ? (data.item || '') : ''}</textarea>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Jumlah (RM)</label>
+                            <input type="text" id="f-jumlah" required value="${isEdit ? data.jumlah : ''}" placeholder="RM 120,000" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Tarikh</label>
+                            <input type="text" id="f-tarikhinv" required value="${isEdit ? data.tarikh : '17 Nov 2026'}" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-600 mb-1">Status</label>
+                            <select id="f-statusinv" class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white">
+                                <option value="Menunggu Bayaran" ${isEdit && data.status === 'Menunggu Bayaran' ? 'selected' : ''}>Menunggu Bayaran</option>
+                                <option value="Dihantar" ${isEdit && data.status === 'Dihantar' ? 'selected' : ''}>Dihantar</option>
+                                <option value="Lulus (Dibayar)" ${isEdit && data.status === 'Lulus (Dibayar)' ? 'selected' : ''}>Lulus (Dibayar)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="rounded-2xl bg-slate-50 p-3.5 border border-dashed border-slate-300">
+                        <label class="block text-xs font-bold text-slate-700 mb-1">
+                            <i class="fa-solid fa-cloud-arrow-up text-industrial-accent"></i> Muat Naik Fail Sebutharga / Invois Luar (Pilihan)
+                        </label>
+                        <input type="file" id="f-attachment" accept=".pdf,image/jpeg,image/png,image/webp" onchange="handleAttachmentUpload(event)" class="w-full text-xs text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-industrial-dark file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-white hover:file:bg-slate-700">
+                        ${existingFileLabel}
+                    </div>
+                `;
+            }
+
+            document.getElementById('form-modal').classList.remove('hidden');
+        }
+
+        function showFormError(msg) {
+            const errBox = document.getElementById('form-upload-error');
+            if (errBox) {
+                errBox.innerText = msg;
+                errBox.classList.remove('hidden');
+            }
+        }
+
+        function handleAttachmentUpload(event) {
+            const file = event.target.files[0];
+            const errBox = document.getElementById('form-upload-error');
+            const statusLabel = document.getElementById('f-file-status');
+            if (errBox) errBox.classList.add('hidden');
+
+            if (!file) return;
+
+            const maxBytes = 3 * 1024 * 1024; // Had selamat 3MB untuk LocalStorage
+            if (file.size > maxBytes) {
+                showFormError('Saiz fail melebihi 3MB! Sila mampatkan (compress) fail PDF atau gambar sebelum muat naik ke LocalStorage.');
+                event.target.value = '';
+                return;
+            }
+
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                showFormError('Format fail tidak disokong. Sila muat naik fail PDF, JPG, PNG, atau WEBP sahaja.');
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                uploadedAttachmentData = {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size,
+                    dataUrl: e.target.result
+                };
+                if (statusLabel) {
+                    statusLabel.className = 'text-[11px] font-semibold text-emerald-600 mt-1';
+                    statusLabel.innerHTML = `<i class="fa-solid fa-circle-check"></i> Fail sedia disimpan: ${file.name}`;
+                }
+            };
+            reader.onerror = function() {
+                showFormError('Gagal membaca fail tersebut. Sila cuba fail lain.');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function closeFormModal() {
+            editRecordIndex = null;
+            uploadedAttachmentData = null;
+            document.getElementById('form-modal').classList.add('hidden');
+        }
+
+        // Simpan Data Borang (Admin Sahaja)
+        function saveRecordSubmit(event) {
+            event.preventDefault();
+            if (currentRole !== 'admin') {
+                closeFormModal();
+                return;
+            }
+
+            let record = {};
+            if (activeModalModule === 'stok') {
+                record = {
+                    kod: document.getElementById('f-kod').value,
+                    nama: document.getElementById('f-nama').value,
+                    kategori: document.getElementById('f-kategori').value,
+                    kuantiti: document.getElementById('f-kuantiti').value,
+                    lokasi: document.getElementById('f-lokasi').value,
+                    status: document.getElementById('f-status').value
+                };
+            } else if (activeModalModule === 'harga') {
+                record = {
+                    bahan: document.getElementById('f-bahan').value,
+                    unit: document.getElementById('f-unit').value,
+                    pembekal: document.getElementById('f-pembekal').value,
+                    harga: document.getElementById('f-harga').value,
+                    tarikh: document.getElementById('f-tarikh').value
+                };
+            } else if (activeModalModule === 'pengangkutan') {
+                record = {
+                    lori: document.getElementById('f-lori').value,
+                    pemandu: document.getElementById('f-pemandu').value,
+                    muatan: document.getElementById('f-muatan').value,
+                    destinasi: document.getElementById('f-destinasi').value,
+                    kos: document.getElementById('f-kos').value,
+                    status: document.getElementById('f-statuslori').value
+                };
+            } else if (activeModalModule === 'projek') {
+                record = {
+                    nama: document.getElementById('f-namaproj').value,
+                    klien: document.getElementById('f-klien').value,
+                    nilai: document.getElementById('f-nilai').value,
+                    pengurus: document.getElementById('f-pengurus').value,
+                    siap: document.getElementById('f-siap').value,
+                    fasa: document.getElementById('f-fasa').value,
+                    peratus: Math.min(100, Math.max(0, parseInt(document.getElementById('f-peratus').value) || 0))
+                };
+            } else if (activeModalModule === 'invoice') {
+                record = {
+                    no: document.getElementById('f-noinv').value,
+                    kategori: document.getElementById('f-katinv').value,
+                    pihak: document.getElementById('f-pihak').value,
+                    item: document.getElementById('f-item').value,
+                    jumlah: document.getElementById('f-jumlah').value,
+                    tarikh: document.getElementById('f-tarikhinv').value,
+                    status: document.getElementById('f-statusinv').value,
+                    attachment: uploadedAttachmentData
+                };
+            }
+
+            const backupList = [...systemData[activeModalModule]];
+            if (editRecordIndex !== null) {
+                systemData[activeModalModule][editRecordIndex] = record;
+            } else {
+                systemData[activeModalModule].unshift(record);
+            }
+
+            if (!saveDataToStorage()) {
+                systemData[activeModalModule] = backupList;
+                return;
+            }
+
+            renderAllModules();
+            closeFormModal();
+        }
+
+        // Padam Rekod (Admin Sahaja)
+        function deleteRecord(moduleName, index) {
+            if (currentRole !== 'admin') return;
+            systemData[moduleName].splice(index, 1);
+            saveDataToStorage();
+            renderAllModules();
+        }
+    </script>
+</body>
+</html>
